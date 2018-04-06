@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-IMG = gcr.io/k8s-testimages/kettle
-TAG = $(shell date +v%Y%m%d)-$(shell git describe --tags --always --dirty)
+IMG ?= gcr.io/k8s-testimages/kettle
+TAG ?= $(shell date +v%Y%m%d)-$(shell git describe --tags --always --dirty)
 
 # These are the usual GKE variables.
 PROJECT       ?= k8s-gubernator
@@ -23,17 +23,18 @@ CLUSTER       ?= g8r
 get-cluster-credentials:
 	kubectl config use-context gke_k8s-gubernator_us-west1-b_g8r || gcloud container clusters get-credentials "$(CLUSTER)" --project="$(PROJECT)" --zone="$(ZONE)"
 
+BUCKETS_YAML ?= ../buckets.yaml
 build:
-	cp ../buckets.yaml .
+	cp $(BUCKETS_YAML) .
 	docker build -t $(IMG):$(TAG) .
 	rm buckets.yaml
 	docker tag $(IMG):$(TAG) $(IMG):latest
-	echo Built $(IMG):$(TAG) and tagged with $(IMG):latest ;
+	@echo Built $(IMG):$(TAG) and tagged with $(IMG):latest
 
 push: build
 	docker push $(IMG):$(TAG)
 	docker push $(IMG):latest
-	echo Pushed $(IMG):latest and $(IMG):$(TAG)
+	@echo Pushed $(IMG):latest and $(IMG):$(TAG)
 
 deploy: get-cluster-credentials
 	sed "s/:latest/:$(TAG)/g" deployment.yaml | kubectl apply -f -

@@ -30,5 +30,5 @@ ENV TZ=America/Los_Angeles
 ADD *.py schema.json runner.sh /kettle/
 ADD buckets.yaml /
 
-CMD ["/kettle/runner.sh"]
+CMD ["/kettle/runner.sh", "--buckets=/buckets.yaml"]
 VOLUME ["/data"]
