@@ -15,7 +15,7 @@ query: |
         count(i.failures) flakes
       from tt.tests i
       group by name
-      having name not in ('Test', 'DiffResources', 'DumpClusterLogs', 'DumpFederationLogs')  /* uninteresting tests */
+      having name not in ('Test', 'DiffResources', 'DumpClusterLogs', 'DumpFederationLogs') /* uninteresting tests */
       order by flakes desc
       limit 3 /* top three flakiest tests in this job */
     ) flakiest
@@ -72,17 +72,7 @@ query: |
           FROM `k8s-gubernator.build.week` as t
           where
             datetime(started) > datetime_sub(current_datetime(), interval 7 DAY)
-            and version != 'unknown'
-            and (
-              (substr(job, 0, 3) = 'ci-' and version != 'unknown') or
-              exists(
-                select as struct
-                  i
-                from t.metadata i
-                where i.key = 'repos' and
-                array_length(split(replace(i.value,', ', ''), ',')) = 2 /*serial pr jobs only (# of PR refs +1 == 2)*/
-              )
-            )
+            and version = 'unknown'
         )
         group by job, commit
       ) as tt
@@ -92,7 +82,7 @@ query: |
   order by flakes desc, commit_consistency, build_consistency, job /* flakiest jobs first */
 
 jqfilter: |
-  [(.[] | select(.job | contains("pr:")) | {(.job): {
+  [(.[] | select(.job | contains("e2e-suite-rbac-auth")) | {(.job): {
       consistency: (.commit_consistency|tonumber),
       flakes: (.flakes|tonumber),
       flakiest: ([(.flakiest[] | select(.flakes|tonumber >= 4) | {
